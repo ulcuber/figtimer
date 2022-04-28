@@ -1,7 +1,39 @@
 #!/bin/bash
 
+usage() {
+    echo "Usage: $0 [-d delimeter] [-n max_times]"
+    echo "  -d delimeter between times (e.g. -d ', ' -> [1.1, 2.2, 3.3]). Default - space ([1.1 2.2 3.3])"
+    echo "  -n max times. Used for marathons (e.g. -n 21)"
+}
+
+delimeter=" "
+max_times=1
+
+while getopts ":d:n:h" o; do
+    case "$o" in
+        d)
+            delimeter=$OPTARG
+            ;;
+        n)
+            max_times=$OPTARG
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $o" 1>&2
+            usage
+            exit 1
+    esac
+done
+
 clear
 echo "figTimer" | figlet
+printf "\ndelimeter: '$delimeter'"
+if [[ $max_times -gt 1 ]]; then
+    printf "\nUsing $max_times solves in a row"
+fi
 
 format_time() {
     local tt=$1
@@ -18,70 +50,83 @@ format_time() {
     fi
 }
 
+# stats
 sum=0
 square_sum=0
 count=0
 best=4294967296
 worst=0
+alltimes=""
 
-while [ 1 ]; do
+while :; do
     key="k"
+    times=0
     while :; do
+        printf "\nq - quit | c - copy to clipboard and quit"
         printf "\nHit space to start the timer..."
         read -n1 -r -p "" key
         if [ "$key" = '' ]; then
             ts=$(date +%s%N)
             break
-        else
-            if [ "$key" = 'q' ]; then
-                echo "uit"
-                exit 0
-            fi
+        elif [ "$key" = 'c' ]; then
+            echo -n $alltimes | xclip -selection clipboard
+            echo "opied"
+            exit 0
+        elif [ "$key" = 'q' ]; then
+            echo "uit"
+            exit 0
         fi
     done
 
     clear && echo "running" | figlet -W
+    printf "\nPress any key to stop..."
 
-    read -n1 -r -p "" key
+    while :; do
+        read -n1 -r -p "" key
+        times=$(($times + 1))
+        if [[ $times -ge $max_times ]]; then
+            break
+        else
+            printf "\nTimes: $times/$max_times"
+        fi
+    done
     duration=$((($(date +%s%N) - $ts) / 10000000))
+
+    currenttime=$(format_time $duration)
+    if [ "$alltimes" == "" ]; then
+        alltimes=$currenttime
+    else
+        alltimes=$alltimes$delimeter$currenttime
+    fi
+
     clear
+    printf $currenttime | figlet -W
+
+    count=$(($count + 1))
+    printf "[$alltimes] ($count) \n\n"
+
+    if [[ $duration -lt $best ]]; then
+        best=$duration
+    fi
+    printf "Best: $(format_time $best)  "
+
+    if [[ $duration -gt $worst ]]; then
+        worst=$duration
+    fi
+    printf "Worst: $(format_time $worst) \n"
 
     sum=$(($sum + $duration))
-    count=$(($count + 1))
+    if [[ $count -gt 2 ]]; then
+        avg=$((($sum - $best - $worst) / ($count - 2)))
+        printf "Avg: $(format_time $avg)  "
+    fi
+
     mean=$(($sum / $count))
+    printf "Mean: $(format_time $mean)  "
 
     delta=$(($mean - $duration))
     square_sum=$(($square_sum + $delta * $delta))
     variance=$(($square_sum / $count))
     deviation=$(bc <<<"scale=0; sqrt($variance)")
-
-    if [[ $duration -lt $best ]]; then
-        best=$duration
-    fi
-    if [[ $duration -gt $worst ]]; then
-        worst=$duration
-    fi
-    if [[ $count > 2 ]]; then
-        avg=$((($sum - $best - $worst) / ($count - 2)))
-    fi
-
-    if [ "$alltimes" == "" ]; then
-        delimeter=""
-    else
-        delimeter=", "
-    fi
-
-    currenttime=$(format_time $duration)
-
-    alltimes=$alltimes$delimeter$currenttime
-
-    printf $currenttime | figlet -W
-    printf "[$alltimes] ($count) \n\n"
-    printf "Best: $(format_time $best)  "
-    printf "Worst: $(format_time $worst) \n"
-    if [[ -n $avg ]]; then
-        printf "Avg: $(format_time $avg)  "
-    fi
-    printf "Mean: $(format_time $mean)  "
     printf "Standard deviation: $(format_time $deviation) \n"
 done

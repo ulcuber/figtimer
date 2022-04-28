@@ -2,7 +2,7 @@
 
 When you're such a terminal guy you can't even use GUI timer for speedcubing
 
-`./figtimer.sh`
+`./figtimer`
 
 ![img1](https://pp.userapi.com/c638516/v638516313/463e4/sV5iquX9c-A.jpg)
 
@@ -23,4 +23,14 @@ sudo apt-get install figlet
 sudo pacman -S figlet
 sudo dnf install figlet
 sudo emerge --ask app-misc/figlet
+```
+
+To copy to clipboard
+
+```bash
+sudo apt-get install xclip
+sudo pacman -S xclip
+# EPEL
+sudo dnf install xclip
+sudo emerge --ask x11-misc/xclip
 ```
