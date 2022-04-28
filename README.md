@@ -34,3 +34,11 @@ sudo pacman -S xclip
 sudo dnf install xclip
 sudo emerge --ask x11-misc/xclip
 ```
+
+To calc standard deviation (needs sqrt)
+```bash
+sudo apt-get install bc
+sudo pacman -S bc
+sudo dnf install bc
+sudo emerge --ask sys-devel/bc
+```

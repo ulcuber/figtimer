@@ -29,10 +29,17 @@ while getopts ":d:n:h" o; do
 done
 
 clear
+if [[ ! $(command -v figlet) ]]; then
+    figlet() {
+        cat
+    }
+    echo "Please install figlet to see acsii arted output"
+fi
 echo "figTimer" | figlet
-printf "\ndelimeter: '$delimeter'"
+
+printf "\ndelimeter: '$delimeter'\n"
 if [[ $max_times -gt 1 ]]; then
-    printf "\nUsing $max_times solves in a row"
+    printf "Using $max_times solves in a row\n"
 fi
 
 format_time() {
@@ -43,7 +50,7 @@ format_time() {
     tt=$(expr $tt / 60)
 
     # output times
-    if [ $tt -eq 0 ]; then
+    if [[ $tt -eq 0 ]]; then
         printf "%02d.%02d\n" $t_s $t_ms
     else
         printf "%02d:%02d.%02d\n" $tt $t_s $t_ms
@@ -78,7 +85,8 @@ while :; do
         fi
     done
 
-    clear && echo "running" | figlet -W
+    clear
+    echo "running" | figlet -W
     printf "\nPress any key to stop..."
 
     while :; do
@@ -103,7 +111,7 @@ while :; do
     printf $currenttime | figlet -W
 
     count=$(($count + 1))
-    printf "[$alltimes] ($count) \n\n"
+    printf "\n[$alltimes] ($count) \n\n"
 
     if [[ $duration -lt $best ]]; then
         best=$duration
@@ -124,9 +132,12 @@ while :; do
     mean=$(($sum / $count))
     printf "Mean: $(format_time $mean)  "
 
-    delta=$(($mean - $duration))
-    square_sum=$(($square_sum + $delta * $delta))
-    variance=$(($square_sum / $count))
-    deviation=$(bc <<<"scale=0; sqrt($variance)")
-    printf "Standard deviation: $(format_time $deviation) \n"
+    if [[ $(command -v bc) ]]; then
+        delta=$(($mean - $duration))
+        square_sum=$(($square_sum + $delta * $delta))
+        variance=$(($square_sum / $count))
+        deviation=$(bc <<<"scale=0; sqrt($variance)")
+        printf "Standard deviation: $(format_time $deviation)"
+    fi
+    echo
 done
